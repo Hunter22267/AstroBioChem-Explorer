@@ -1,28 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import py3Dmol
-import streamlit.components.v1 as components
 import os
-
-# ---------------------------
-# Step 4: 3D Molecule Viewer
-# ---------------------------
-def show_molecule(pdb_file, key):
-    if not os.path.exists(pdb_file):
-        st.error(f"File not found: {pdb_file}")
-        return
-
-    with open(pdb_file,'r') as f:
-        pdb = f.read()
-
-    view = py3Dmol.view(width=800, height=500)
-    view.addModel(pdb, 'pdb')
-    view.setStyle({'cartoon': {'color':'spectrum'}})
-    view.zoomTo()
-
-    html_str = view.getHTML()  # Safe HTML rendering
-    components.html(html_str, height=500, scrolling=True, key=key)
 
 # ---------------------------
 # Streamlit page config
@@ -89,7 +68,7 @@ def habitability_score(row):
 df["habitability"] = df.apply(habitability_score, axis=1)
 
 # ---------------------------
-# Planet selection & dynamic molecule
+# Planet selection & molecule image
 # ---------------------------
 st.subheader("Select a Planet to See its Biomolecule")
 planet_name = st.selectbox("Choose a planet:", df["pl_name"])
@@ -97,22 +76,25 @@ planet = df[df["pl_name"]==planet_name].iloc[0]
 
 # Map molecules to planet conditions
 if planet["pl_eqt"] < 250:
-    pdb_file = "molecules/1AFP.pdb"  # Cold planet
+    img_file = "molecules/1AFP.png"  # Cold planet
 elif planet["habitability"] > 80:
-    pdb_file = "molecules/1RUB.pdb"  # Highly habitable
+    img_file = "molecules/1RUB.png"  # Highly habitable
 elif planet["st_teff"] > 6000:
-    pdb_file = "molecules/2SOD.pdb"  # High-radiation star
+    img_file = "molecules/2SOD.png"  # High-radiation star
 elif 3000 <= planet["st_teff"] <= 3700:
-    pdb_file = "molecules/1HRC.pdb"  # Cooler stars
+    img_file = "molecules/1HRC.png"  # Cooler stars
 elif 0 <= planet["habitability"] <= 40:
-    pdb_file = "molecules/1LYZ.pdb"  # Low habitability
+    img_file = "molecules/1LYZ.png"  # Low habitability
 elif 60 < planet["habitability"] <= 80:
-    pdb_file = "molecules/1HHO.pdb"  # Moderate-high habitability
+    img_file = "molecules/1HHO.png"  # Moderate-high habitability
 else:
-    pdb_file = "molecules/3ARC.pdb"  # Default
+    img_file = "molecules/3ARC.png"  # Default
 
-# Render molecule
-show_molecule(pdb_file, key="planet_molecule")
+# Show molecule image
+if os.path.exists(img_file):
+    st.image(img_file, caption=os.path.basename(img_file).replace(".png",""), use_column_width=True)
+else:
+    st.warning(f"Molecule image not found: {img_file}")
 
 # ---------------------------
 # Searchable Table
@@ -166,4 +148,3 @@ fig2 = px.scatter(
     }
 )
 st.plotly_chart(fig2, use_container_width=True)
-
