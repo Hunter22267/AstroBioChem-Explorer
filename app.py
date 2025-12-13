@@ -1,6 +1,23 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import py3Dmol
+import streamlit.components.v1 as components  # Needed for py3Dmol in Streamlit
+
+# --- Step 4: 3D molecule viewer function ---
+def show_molecule(pdb_file, key):
+    with open(pdb_file,'r') as f:
+        pdb = f.read()
+    view = py3Dmol.view(width=800, height=500)
+    view.addModel(pdb,'pdb')
+    view.setStyle({'cartoon': {'color':'spectrum'}})
+    view.zoomTo()
+    # Streamlit render
+    components.html(view._make_html(), height=500, key=key)
+
 
 st.set_page_config(page_title="AstroBioChem Explorer", layout="wide")
 
@@ -72,6 +89,22 @@ def habitability_score(row):
 df = load_exoplanet_data()
 # Create habitability column
 df["habitability"] = df.apply(habitability_score, axis=1)
+
+# --- Step 5: Choose molecule based on planet properties ---
+planet = df[df["pl_name"]==planet_name].iloc[0]
+
+if planet["pl_eqt"] < 250:
+    pdb_file = "molecules/1AFP.pdb"  # Antifreeze protein
+elif planet["habitability"] > 70:
+    pdb_file = "molecules/1RUB.pdb"  # Rubisco
+elif planet["st_teff"] > 6000:
+    pdb_file = "molecules/2SOD.pdb"  # SOD for high-radiation stars
+else:
+    pdb_file = "molecules/1BNA.pdb"  # DNA for default
+
+# Render the chosen molecule
+show_molecule(pdb_file, key="planet_molecule")
+
 
 
 st.subheader("🔍 Exoplanet Dataset with Habitability Score")
