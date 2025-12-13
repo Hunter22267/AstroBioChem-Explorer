@@ -7,16 +7,26 @@ import os
 
 # --- Step 4: 3D molecule viewer function ---
 def show_molecule(pdb_file, key):
+    import py3Dmol
+    import streamlit.components.v1 as components
+    import os
+
     if not os.path.exists(pdb_file):
         st.error(f"File not found: {pdb_file}")
         return
+
     with open(pdb_file,'r') as f:
         pdb = f.read()
+
     view = py3Dmol.view(width=800, height=500)
-    view.addModel(pdb,'pdb')
+    view.addModel(pdb, 'pdb')
     view.setStyle({'cartoon': {'color':'spectrum'}})
     view.zoomTo()
-    components.html(view._make_html(), height=500, key=key)
+    
+    # Correct way to render HTML in Streamlit
+    html_str = view._make_html()  # get HTML as string
+    components.html(html_str, height=500, scrolling=True, key=key)
+
 
 # --- Streamlit page config ---
 st.set_page_config(page_title="AstroBioChem Explorer", layout="wide")
