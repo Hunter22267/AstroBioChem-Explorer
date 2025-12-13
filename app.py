@@ -5,14 +5,10 @@ import py3Dmol
 import streamlit.components.v1 as components
 import os
 
-# --- Step 4: 3D molecule viewer function ---
-import tempfile
-
+# ---------------------------
+# Step 4: 3D Molecule Viewer
+# ---------------------------
 def show_molecule(pdb_file, key):
-    import py3Dmol
-    import streamlit.components.v1 as components
-    import os
-
     if not os.path.exists(pdb_file):
         st.error(f"File not found: {pdb_file}")
         return
@@ -25,21 +21,16 @@ def show_molecule(pdb_file, key):
     view.setStyle({'cartoon': {'color':'spectrum'}})
     view.zoomTo()
 
-    # Write HTML to temp file and read back as string
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
-    tmp.write(view._make_html().encode('utf-8'))
-    tmp.close()
-    with open(tmp.name, 'r') as f:
-        html_str = f.read()
-
+    html_str = view.getHTML()  # Safe HTML rendering
     components.html(html_str, height=500, scrolling=True, key=key)
 
-
-# --- Streamlit page config ---
+# ---------------------------
+# Streamlit page config
+# ---------------------------
 st.set_page_config(page_title="AstroBioChem Explorer", layout="wide")
 st.title("Hunter's AstroBioChem Explorer")
 
-# Sidebar explanation
+# Sidebar: Habitability formula
 st.sidebar.title("🧪 Habitability Score")
 st.sidebar.write("""
 Score (0–100) based on:
@@ -47,8 +38,6 @@ Score (0–100) based on:
 - Planet radius: 0.5–2.0 Earth radii → rocky & habitable
 - Stellar type: G, K, quiet M → better
 - Atmosphere: H₂O / CO₂ presence → bonus points
-
-Formula is simple sum of normalized factors, scaled to 100.
 """)
 
 st.write("Exploring real NASA exoplanet data 🌍🪐")
@@ -100,21 +89,27 @@ def habitability_score(row):
 df["habitability"] = df.apply(habitability_score, axis=1)
 
 # ---------------------------
-# Planet selection for molecule
+# Planet selection & dynamic molecule
 # ---------------------------
 st.subheader("Select a Planet to See its Biomolecule")
 planet_name = st.selectbox("Choose a planet:", df["pl_name"])
 planet = df[df["pl_name"]==planet_name].iloc[0]
 
-# Choose molecule based on planet properties
+# Map molecules to planet conditions
 if planet["pl_eqt"] < 250:
-    pdb_file = "molecules/1AFP.pdb"  # Antifreeze protein
-elif planet["habitability"] > 70:
-    pdb_file = "molecules/1RUB.pdb"  # Rubisco
+    pdb_file = "molecules/1AFP.pdb"  # Cold planet
+elif planet["habitability"] > 80:
+    pdb_file = "molecules/1RUB.pdb"  # Highly habitable
 elif planet["st_teff"] > 6000:
-    pdb_file = "molecules/2SOD.pdb"  # SOD
+    pdb_file = "molecules/2SOD.pdb"  # High-radiation star
+elif 3000 <= planet["st_teff"] <= 3700:
+    pdb_file = "molecules/1HRC.pdb"  # Cooler stars
+elif 0 <= planet["habitability"] <= 40:
+    pdb_file = "molecules/1LYZ.pdb"  # Low habitability
+elif 60 < planet["habitability"] <= 80:
+    pdb_file = "molecules/1HHO.pdb"  # Moderate-high habitability
 else:
-    pdb_file = "molecules/3ARC.pdb"  # Photosystem II as default
+    pdb_file = "molecules/3ARC.pdb"  # Default
 
 # Render molecule
 show_molecule(pdb_file, key="planet_molecule")
@@ -171,3 +166,4 @@ fig2 = px.scatter(
     }
 )
 st.plotly_chart(fig2, use_container_width=True)
+
