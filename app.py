@@ -89,6 +89,9 @@ def habitability_score(row):
 df = load_exoplanet_data()
 # Create habitability column
 df["habitability"] = df.apply(habitability_score, axis=1)
+st.subheader("Select a Planet to See its Molecule")
+planet_name = st.selectbox("Choose a planet:", df["pl_name"])
+
 
 # --- Step 5: Choose molecule based on planet properties ---
 planet = df[df["pl_name"]==planet_name].iloc[0]
