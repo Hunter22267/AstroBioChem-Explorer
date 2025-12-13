@@ -6,6 +6,8 @@ import streamlit.components.v1 as components
 import os
 
 # --- Step 4: 3D molecule viewer function ---
+import tempfile
+
 def show_molecule(pdb_file, key):
     import py3Dmol
     import streamlit.components.v1 as components
@@ -22,9 +24,14 @@ def show_molecule(pdb_file, key):
     view.addModel(pdb, 'pdb')
     view.setStyle({'cartoon': {'color':'spectrum'}})
     view.zoomTo()
-    
-    # Correct way to render HTML in Streamlit
-    html_str = view._make_html()  # get HTML as string
+
+    # Write HTML to temp file and read back as string
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
+    tmp.write(view._make_html().encode('utf-8'))
+    tmp.close()
+    with open(tmp.name, 'r') as f:
+        html_str = f.read()
+
     components.html(html_str, height=500, scrolling=True, key=key)
 
 
