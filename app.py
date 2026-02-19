@@ -5,7 +5,7 @@ import os
 
 # 3D molecules + PDF
 import py3Dmol
-from stpy3Dmol import stpy3Dmol
+import streamlit.components.v1 as components
 from fpdf import FPDF
 
 st.set_page_config(page_title="AstroBioChem Explorer", layout="wide")
@@ -100,12 +100,15 @@ else:
     pdb_file = pdb_map["lysozyme"]
 
 # ---------------- 3D MOLECULE VIEWER ----------------
+st.subheader("🧠 Plausible Biomolecule (3D View)")
+
 if os.path.exists(pdb_file):
     view = py3Dmol.view(width=800, height=500)
     view.addModel(open(pdb_file).read(), "pdb")
     view.setStyle({"cartoon": {"color": "spectrum"}})
     view.zoomTo()
-    stpy3Dmol(view, key=planet_name)
+
+    components.html(view._make_html(), height=550)
 else:
     st.warning(f"PDB file not found: {pdb_file}")
 
