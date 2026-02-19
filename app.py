@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
+from io import BytesIO
 
 # 3D molecules + PDF
 import py3Dmol
 import streamlit.components.v1 as components
-from fpdf2 import FPDF
 
 st.set_page_config(page_title="AstroBioChem Explorer", layout="wide")
 st.title("Hunter's AstroBioChem Explorer")
@@ -112,31 +112,37 @@ if os.path.exists(pdb_file):
 else:
     st.warning(f"PDB file not found: {pdb_file}")
 
-# ---------------- PDF EXPORT ----------------
-def generate_pdf(planet):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
+# ---------------- REPORT EXPORT ----------------
+st.subheader("📄 Export Planet Report")
 
-    pdf.cell(0, 10, f"Planet: {planet['pl_name']}", ln=True)
-    pdf.cell(0, 10, f"Host Star: {planet['hostname']}", ln=True)
-    pdf.cell(0, 10, f"Temperature: {planet['pl_eqt']} K", ln=True)
-    pdf.cell(0, 10, f"Radius: {planet['pl_rade']} Earth radii", ln=True)
-    pdf.cell(0, 10, f"Habitability Score: {planet['habitability']}", ln=True)
+def generate_report(planet):
+    report = f"""
+AstroBioChem Explorer – Planet Report
 
-    path = f"{planet['pl_name']}_report.pdf"
-    pdf.output(path)
-    return path
+Planet Name: {planet['pl_name']}
+Host Star: {planet['hostname']}
+Discovery Year: {planet['disc_year']}
 
-if st.button("📄 Export Planet PDF Report"):
-    pdf_path = generate_pdf(planet)
-    with open(pdf_path, "rb") as f:
-        st.download_button(
-            label="Download PDF",
-            data=f,
-            file_name=pdf_path,
-            mime="application/pdf"
-        )
+Equilibrium Temperature: {planet['pl_eqt']} K
+Planet Radius: {planet['pl_rade']} Earth radii
+Estimated Habitability Score: {int(planet['habitability'])}/100
+
+This score is based on temperature range, planetary size,
+and host star characteristics using public NASA data.
+"""
+    buffer = BytesIO()
+    buffer.write(report.encode("utf-8"))
+    buffer.seek(0)
+    return buffer
+
+report_file = generate_report(planet)
+
+st.download_button(
+    label="⬇️ Download Planet Report",
+    data=report_file,
+    file_name=f"{planet['pl_name']}_report.txt",
+    mime="text/plain"
+)
 
 # ---------------- DATA TABLE ----------------
 st.subheader("🔍 Exoplanet Dataset")
