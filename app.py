@@ -1,24 +1,24 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import py3Dmol
 import os
 from io import BytesIO
-
-# 3D molecules + PDF
-import py3Dmol
 import streamlit.components.v1 as components
 
+# ---------------- PAGE SETUP ----------------
 st.set_page_config(page_title="AstroBioChem Explorer", layout="wide")
 st.title("Hunter's AstroBioChem Explorer")
+st.write("Exploring real NASA exoplanet data with biochemistry-based habitability models 🌍🧬")
 
 # ---------------- SIDEBAR ----------------
-st.sidebar.title("🧪 Habitability Score")
+st.sidebar.title("🧪 Habitability Score Model")
 st.sidebar.write("""
-Score (0–100) based on:
-- Temperature: 250–350 K → good
-- Planet radius: 0.5–2.0 Earth radii → rocky
-- Stellar temperature: G/K stars preferred
-- Atmosphere: placeholder for future data
+**Score (0–100)** based on:
+- 🌡️ Temperature (250–350 K ideal)
+- 🪐 Planet radius (0.5–2.0 Earth radii)
+- ⭐ Stellar temperature (G/K preferred)
+- 🧬 Atmosphere (future expansion)
 """)
 
 # ---------------- DATA LOADING ----------------
@@ -35,7 +35,7 @@ def load_exoplanet_data():
 
 df = load_exoplanet_data()
 
-# ---------------- HABITABILITY LOGIC ----------------
+# ---------------- HABITABILITY MODEL ----------------
 def habitability_components(row):
     temp = radius = star = atmosphere = 0
 
@@ -48,8 +48,6 @@ def habitability_components(row):
     if pd.notnull(row["st_teff"]):
         star = 20 if 3700 <= row["st_teff"] <= 6000 else 10
 
-    atmosphere = 0  # future expansion
-
     return temp, radius, star, atmosphere
 
 def habitability_score(row):
@@ -58,11 +56,12 @@ def habitability_score(row):
 df["habitability"] = df.apply(habitability_score, axis=1)
 
 # ---------------- PLANET SELECTION ----------------
+st.divider()
 st.subheader("🪐 Select a Planet")
 planet_name = st.selectbox("Choose a planet:", df["pl_name"])
 planet = df[df["pl_name"] == planet_name].iloc[0]
 
-# ---------------- PLANET PROFILE CARD ----------------
+# ---------------- PLANET PROFILE ----------------
 st.subheader("📌 Planet Profile")
 c1, c2, c3 = st.columns(3)
 c1.metric("Temperature (K)", round(planet["pl_eqt"], 1))
@@ -70,17 +69,17 @@ c2.metric("Radius (Earth)", round(planet["pl_rade"], 2))
 c3.metric("Habitability Score", int(planet["habitability"]))
 
 # ---------------- SCORE BREAKDOWN ----------------
-components = habitability_components(planet)
+components_scores = habitability_components(planet)
 breakdown_df = pd.DataFrame({
     "Factor": ["Temperature", "Radius", "Star Type", "Atmosphere"],
-    "Score": components
+    "Score": components_scores
 })
 
 st.subheader("🧬 Habitability Score Breakdown")
 st.bar_chart(breakdown_df.set_index("Factor"))
 
 # ---------------- MOLECULE SELECTION ----------------
-st.subheader("🧠 Plausible Biomolecule")
+st.subheader("🧠 Plausible Biomolecule (3D)")
 
 pdb_map = {
     "rubisco": "molecules/1RUB.pdb",
@@ -89,7 +88,6 @@ pdb_map = {
     "lysozyme": "molecules/1LYZ.pdb"
 }
 
-# Rule-based molecule choice
 if planet["pl_eqt"] < 250:
     pdb_file = pdb_map["antifreeze"]
 elif planet["habitability"] > 80:
@@ -99,66 +97,63 @@ elif planet["st_teff"] > 6000:
 else:
     pdb_file = pdb_map["lysozyme"]
 
-# ---------------- 3D MOLECULE VIEWER ----------------
-st.subheader("🧠 Plausible Biomolecule (3D View)")
-
 if os.path.exists(pdb_file):
     view = py3Dmol.view(width=800, height=500)
     view.addModel(open(pdb_file).read(), "pdb")
     view.setStyle({"cartoon": {"color": "spectrum"}})
     view.zoomTo()
 
-    components.html(view._make_html(), height=550)
+    components.html(view._repr_html_(), height=550)
 else:
-    st.warning(f"PDB file not found: {pdb_file}")
+    st.warning(f"Missing PDB file: {pdb_file}")
 
-# ---------------- REPORT EXPORT ----------------
+# ---------------- REPORT EXPORT (CLOUD SAFE) ----------------
 st.subheader("📄 Export Planet Report")
 
 def generate_report(planet):
     report = f"""
 AstroBioChem Explorer – Planet Report
 
-Planet Name: {planet['pl_name']}
+Planet: {planet['pl_name']}
 Host Star: {planet['hostname']}
 Discovery Year: {planet['disc_year']}
 
 Equilibrium Temperature: {planet['pl_eqt']} K
 Planet Radius: {planet['pl_rade']} Earth radii
-Estimated Habitability Score: {int(planet['habitability'])}/100
+Habitability Score: {int(planet['habitability'])}/100
 
-This score is based on temperature range, planetary size,
-and host star characteristics using public NASA data.
+Generated using NASA Exoplanet Archive data.
 """
     buffer = BytesIO()
     buffer.write(report.encode("utf-8"))
     buffer.seek(0)
     return buffer
 
-report_file = generate_report(planet)
-
 st.download_button(
-    label="⬇️ Download Planet Report",
-    data=report_file,
+    "⬇️ Download Report",
+    generate_report(planet),
     file_name=f"{planet['pl_name']}_report.txt",
     mime="text/plain"
 )
 
-# ---------------- DATA TABLE ----------------
+# ---------------- SEARCHABLE TABLE ----------------
+st.divider()
 st.subheader("🔍 Exoplanet Dataset")
-search = st.text_input("Search by planet or star name:")
 
+search = st.text_input("Search by planet or star name:")
 filtered_df = df[
     df["pl_name"].str.contains(search, case=False, na=False) |
     df["hostname"].str.contains(search, case=False, na=False)
 ] if search else df
 
-filtered_df = filtered_df.sort_values(by="habitability", ascending=False)
-st.dataframe(filtered_df, use_container_width=True)
+st.dataframe(
+    filtered_df.sort_values("habitability", ascending=False),
+    use_container_width=True
+)
 
 # ---------------- SCATTER PLOTS ----------------
 st.subheader("📊 Planet Radius vs Temperature (Discovery Facility)")
-fig = px.scatter(
+fig1 = px.scatter(
     df,
     x="pl_eqt",
     y="pl_rade",
@@ -169,7 +164,7 @@ fig = px.scatter(
         "pl_rade": "Planet Radius (Earth radii)"
     }
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig1, use_container_width=True)
 
 st.subheader("📊 Planet Radius vs Temperature (Habitability)")
 fig2 = px.scatter(
