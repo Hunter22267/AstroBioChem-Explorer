@@ -6,7 +6,7 @@ import os
 # 3D molecules + PDF
 import py3Dmol
 import streamlit.components.v1 as components
-from fpdf import FPDF
+from fpdf2 import FPDF
 
 st.set_page_config(page_title="AstroBioChem Explorer", layout="wide")
 st.title("Hunter's AstroBioChem Explorer")
