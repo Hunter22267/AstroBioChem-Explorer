@@ -103,32 +103,56 @@ breakdown_df = pd.DataFrame({
 
 st.bar_chart(breakdown_df.set_index("Factor"))
 
-# ================= BIOMOLECULE VISUALIZATION =================
-st.subheader("🧠 Plausible Biomolecule")
+# ================= BIOMOLECULE ANALYSIS =================
+st.subheader("🧬 Plausible Biomolecule")
 
+molecule_data = {
+    "Antifreeze Protein": {
+        "reason": "Selected because this planet has a very low equilibrium temperature.",
+        "function": "Prevents ice crystal formation inside cells.",
+        "astrobiology": "Could help hypothetical life survive on cold worlds where liquid water is scarce."
+    },
+    "Rubisco": {
+        "reason": "Selected because this planet scored highly on the habitability index.",
+        "function": "Enzyme responsible for carbon fixation during photosynthesis.",
+        "astrobiology": "Could support Earth-like biological energy cycles on potentially habitable planets."
+    },
+    "Superoxide Dismutase (SOD)": {
+        "reason": "Selected because the host star is relatively hot and may produce higher radiation levels.",
+        "function": "Protects cells from oxidative damage caused by reactive oxygen species.",
+        "astrobiology": "Could be essential for life exposed to elevated radiation environments."
+    },
+    "Lysozyme": {
+        "reason": "Selected as a general-purpose biomolecule for less favorable environments.",
+        "function": "Breaks down bacterial cell walls and contributes to cellular defense.",
+        "astrobiology": "Represents a simple, robust protein that could remain useful in a wide range of conditions."
+    }
+}
+
+# Select molecule based on planet properties
 if planet["pl_eqt"] < 250:
-    molecule_key = "antifreeze"
+    molecule = "Antifreeze Protein"
 elif planet["habitability"] > 80:
-    molecule_key = "rubisco"
+    molecule = "Rubisco"
 elif planet["st_teff"] > 6000:
-    molecule_key = "sod"
+    molecule = "Superoxide Dismutase (SOD)"
 else:
-    molecule_key = "lysozyme"
+    molecule = "Lysozyme"
 
-if os.path.exists(mol["file"]):
-    st.image(
-        mol["file"],
-        caption=f"{molecule_key.upper()} — {mol['reason']}",
-        use_container_width=True
-    )
-else:
-    st.warning("Molecule image not found. Add images to /molecules folder.")
+info = molecule_data[molecule]
+
+st.markdown(f"### {molecule}")
+
+st.write(f"**Why it was selected:** {info['reason']}")
+
+st.write(f"**Biological Function:** {info['function']}")
+
+st.write(f"**Astrobiology Relevance:** {info['astrobiology']}")
 
 st.info(
-    "Interactive 3D molecular rendering is available in the local research version. "
-    "The public deployment uses static structures for stability."
+    "This biomolecule is a conceptual example used to explore how different biological "
+    "adaptations might help life survive under various planetary conditions."
 )
-
 # ================= REPORT EXPORT =================
 st.subheader("📄 Export Planet Report")
 
