@@ -106,25 +106,6 @@ st.bar_chart(breakdown_df.set_index("Factor"))
 # ================= BIOMOLECULE VISUALIZATION =================
 st.subheader("🧠 Plausible Biomolecule")
 
-molecule_map = {
-    "antifreeze": {
-        "file": "molecules/1AFP.png",
-        "reason": "Cold environments require proteins that inhibit ice crystal growth."
-    },
-    "rubisco": {
-        "file": "molecules/1RUB.png",
-        "reason": "Higher habitability may allow carbon fixation pathways."
-    },
-    "sod": {
-        "file": "molecules/2SOD.png",
-        "reason": "High stellar radiation increases oxidative stress."
-    },
-    "lysozyme": {
-        "file": "molecules/1LYZ.png",
-        "reason": "Robust, general-purpose protein for low-habitability environments."
-    }
-}
-
 if planet["pl_eqt"] < 250:
     molecule_key = "antifreeze"
 elif planet["habitability"] > 80:
