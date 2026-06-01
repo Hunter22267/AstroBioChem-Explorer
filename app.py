@@ -115,8 +115,6 @@ elif planet["st_teff"] > 6000:
 else:
     molecule_key = "lysozyme"
 
-mol = molecule_map[molecule_key]
-
 if os.path.exists(mol["file"]):
     st.image(
         mol["file"],
